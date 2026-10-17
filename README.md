@@ -246,14 +246,16 @@ For technical enquiries or collaboration:
 - **Website:** https://cursorlordsystems.com
 - **Email:** contact@cursorlordsystems.com
 
-Copyright © 2023–2026 Usenobong Jonah. All rights reserved.
 
-## License
 
-The PBRCIM specification and documentation are licensed under the [Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License (CC BY-NC-ND 4.0)](https://creativecommons.org/licenses/by-nc-nd/4.0/).
+## License & Copyright
 
-Copyright © 2023–2026 Usenobong Jonah (CursorLord). All rights reserved, subject to the permissions granted by the license.
+Copyright © 2023–2026 Usenobong Jonah (CursorLord). All rights reserved.
 
-For commercial licensing enquiries or permissions beyond the scope of this license, contact contact@cursorlordsystems.com.
+The PBRCIM specification, methodology text, and documentation are licensed under the **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License (CC BY-NC-ND 4.0)**. 
 
-This license applies to the specification and documentation identified as licensed material. It does not automatically determine the licensing of separate software, trademarks, or other assets.
+### Permitted Platform Exceptions:
+To facilitate collaboration on GitHub, permission is granted to fork this repository, star it, or clone it for individual study. However, you may not distribute modified versions of the core framework text, re-host the specification commercially, or claim authorship.
+
+### Commercial Restrictions:
+Because this framework is licensed under CC BY-NC-ND 4.0, any commercial use, integration into proprietary tools, or use within paid enterprise workflows is strictly prohibited without explicit written permission. For inquiries, contact: contact@cursorlordsystems.com.
