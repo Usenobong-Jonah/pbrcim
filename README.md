@@ -1,421 +1,259 @@
-# PBRCIM
+# Pattern-Based Root Cause Isolation Model (PBRCIM)
 
-## Pattern-Based Root Cause Isolation Model
+**Framework:** Pattern-Based Root Cause Isolation Model  
+**Author:** Usenobong Jonah (CursorLord)  
+**Organization:** CursorLord Systems  
+**Status:** Actively developed  
+**Canonical site:** https://cursorlordsystems.com
 
-PBRCIM is a diagnostic framework for investigating complex software failures by comparing what a system was expected to do with what it actually did.
+PBRCIM is a structured diagnostic framework for investigating complex software and infrastructure failures by comparing **intended behavior** with **observed execution**, locating the earliest meaningful divergence, and tracing the conditions that allowed it to occur.
 
-It focuses on the point where expected execution and observed behavior begin to diverge.
+Its central question is:
 
-PBRCIM is useful when conventional debugging produces incomplete answers. Logs may look normal. Tests may pass. The application may build successfully. Yet the system still behaves incorrectly.
+> **What was supposed to happen, what actually happened, where did the paths diverge, and what condition explains that divergence?**
 
-The starting question is simple:
-
-> **What was supposed to happen, what actually happened, and where did the two paths diverge?**
-
----
+PBRCIM is a diagnostic methodology, not a programming language, runtime, package, or replacement for conventional debugging tools.
 
 ## The Problem PBRCIM Addresses
 
-Not every software failure appears as a clear exception or error message.
+Not every failure presents as a clear exception or failed process. A system can:
 
-A system can:
-
-- Complete a build but produce the wrong output.
+- Complete a build but produce an incorrect artifact.
 - Pass tests but fail under real runtime conditions.
-- Follow part of an execution path and silently skip another.
-- Enter an unexpected state without throwing an obvious error.
-- Hang without producing a useful exit code.
-- Return a valid response while processing the wrong data.
-- Execute successfully against the wrong assumption.
+- Skip an execution stage without an obvious error.
+- Enter an unexpected state while individual operations appear valid.
+- Time out or stall before producing useful diagnostic output.
+- Return a valid response containing incorrect or unexpected data.
+- Behave differently when configuration, timing, dependencies, or environment change.
 
-Traditional debugging tools remain essential for investigating these problems.
+Logs, debuggers, traces, metrics, tests, profilers, and DevTools remain essential evidence sources. PBRCIM adds a structured comparison of the execution path that was expected against the path the system actually followed.
 
-PBRCIM does not replace logs, debuggers, traces, tests, profilers, or DevTools.
-
-It adds another layer of investigation:
-
-> **Compare the intended execution path with the path the system actually followed.**
-
-The difference between those two paths often exposes the fault.
-
----
+The aim is not to assume a cause from a symptom. It is to establish the observed behavior, define the expected behavior, identify a useful divergence boundary, and investigate the conditions around it.
 
 ## Core Model
 
-PBRCIM treats unexpected behavior as an execution divergence problem.
-
-A simplified model looks like this:
+PBRCIM treats unexpected behavior as an **execution-divergence problem**.
 
 ```text
-Expected Behavior
-      │
-      ▼
-Stage 1 → Stage 2 → Stage 3 → Stage 4 → Expected Result
+INTENDED EXECUTION
+Stage 1 → Stage 2 → Stage 3 → Stage 4 → Expected result
 
+OBSERVED EXECUTION
+Stage 1 → Stage 2 → Divergence → Unexpected result
 
-Actual Behavior
-      │
-      ▼
-Stage 1 → Stage 2 → Divergence → Unexpected Result
+INVESTIGATION
+Compare → Locate divergence → Trace conditions → Verify correction
+```
 
-The investigation focuses on four questions:
+The model examines four questions:
 
-1. What was expected to happen?
-2. What actually happened?
-3. At which point did the behavior diverge?
-4. What condition caused that divergence?
+1. What behavior did the design or specification require?
+2. What behavior does the available evidence show?
+3. Where is the earliest meaningful difference between the two?
+4. Which condition or combination of conditions explains that difference?
 
-The goal is not to inspect every part of the system.
+The divergence point is an **investigation boundary**, not automatically a proven root cause. Incomplete telemetry, asynchronous execution, concurrency, or poorly aligned traces can make the exact point uncertain. PBRCIM therefore uses the divergence to focus investigation, then traces dependencies and verifies the explanation.
 
-The goal is to locate the first meaningful break between expected and observed behavior.
+### A compact formal representation
 
-PBRCIM Diagnostic Process
-1. Observe the Failure
+Let the intended execution be an ordered sequence:
 
-Start with the visible problem.
+\[
+I = [i_1, i_2, \ldots, i_n]
+\]
 
-Define what is broken, missing, delayed, skipped, altered, or behaving unexpectedly.
+Let the observed execution be an ordered sequence of recorded states or events:
 
-Do not begin by assuming the cause.
+\[
+O = [o_1, o_2, \ldots, o_m]
+\]
 
-Record the observable behavior first.
+After the relevant stages or events have been aligned, compare the expected and observed behavior at each comparable position. The first meaningful mismatch can be represented as:
 
-2. Define the Expected Path
+\[
+k^* = \min \{k \mid \operatorname{compare}(i_k,o_k)=\text{mismatch}\}
+\]
 
-Describe the execution path that should have occurred.
+This representation is conceptual: real traces may contain missing events, repeated events, asynchronous branches, or states that cannot be compared one-to-one. Alignment and comparison criteria must therefore be defined for the system under investigation. If the evidence is insufficient, the result should be recorded as an uncertain divergence boundary rather than an exact point.
 
-For example:
+The model does not assume that every system state is identical across every execution. It asks whether the observed behavior satisfies the relevant requirements, invariants, and expected transitions for the case being investigated.
 
-Commit
-  ↓
-Build
-  ↓
-Test
-  ↓
-Deploy
+## The Seven-Step PBRCIM Diagnostic Protocol
 
-Or:
+### 1. Observe the failure
 
-Authenticate
-  ↓
-Fetch Data
-  ↓
-Process Data
-  ↓
-Return Response
+Record the visible problem and preserve the available evidence: logs, console output, telemetry, execution records, error messages, and relevant state. Separate direct observations from hypotheses. Avoid guessing at the cause before the evidence has been mapped.
 
-The expected path provides the reference model.
+### 2. Define the intended path
 
-3. Trace the Observed Path
+Establish the expected sequence of operations, state transitions, conditions, or outputs from the relevant specification, design, known-good behavior, or operational requirement. The expected path is the reference against which the observed path will be assessed.
 
-Record what the system actually did.
+Example:
 
-For example:
-
-Commit
-  ↓
-Build
-  ↓
-Test
-  ↓
-Deployment Skipped
-
-Or:
-
-Authenticate
-  ↓
-Fetch Data
-  ↓
-Timeout
-
-At this point, the problem becomes a comparison.
-
-4. Identify the Divergence
-
-Compare both paths stage by stage.
-
-Look for differences in:
-
-- Execution order
-- Conditions
-- State
-- Inputs
-- Outputs
-- Dependencies
-- Runtime environment
-- Configuration
-- Timing
-- Control flow
-
-The important question is:
-
-Where did the system first stop behaving as expected?
-
-That point becomes the primary investigation boundary.
-
-5. Compare Working and Broken Paths
-
-Where possible, compare a successful execution with a failed one.
-
-For example:
-
-WORKING
-Request → Auth → Fetch → Process → Respond
-
-
-BROKEN
-Request → Auth → Fetch → Timeout
-
-The paths are identical until Fetch.
-
-The investigation can now focus on the transition between Fetch and Process rather than the entire application.
-
-6. Trace Dependencies
-
-Once the divergence point is known, trace outward.
-
-Investigate:
-
-- Upstream inputs
-- Downstream effects
-- Environment differences
-- Configuration values
-- Dependency behavior
-- Conditional logic
-- State transitions
-
-The objective is to identify the condition that allowed the expected path to change.
-
-7. Verify the Correction
-
-Apply the smallest valid correction.
-
-Then repeat the execution path.
-
-The fix is not complete because the error disappeared.
-
-The corrected system should now follow the expected behavior path.
-
-Representative Examples
-CI/CD Pipeline
-
-Expected
-
+```text
 Commit → Build → Test → Deploy
+```
 
-Observed
+### 3. Trace the observed path
 
-Commit → Build → Test → Deploy Skipped
+Reconstruct what the system actually did from available evidence. Record skipped stages, altered values, unexpected ordering, timeouts, state changes, and incomplete outcomes. Mark gaps where the evidence does not establish what happened.
 
-Divergence
+Example:
 
-The pipeline completed testing but did not enter deployment.
+```text
+Commit → Build → Test → Deployment skipped
+```
 
-Investigation
+### 4. Identify the divergence
 
-Compare the deployment conditions with the actual branch, tag, environment, and workflow state.
+Compare the intended and observed paths stage by stage. Examine execution order, conditions, state, inputs, outputs, dependencies, environment, configuration, timing, and control flow. Identify the earliest meaningful mismatch that the available evidence supports.
 
-A conditional trigger mismatch may reveal that deployment was configured to run only under conditions that were not present.
+### 5. Compare working and broken paths
 
-API Failure Under Load
+Where a trustworthy baseline exists, compare a working execution with the failing execution. Identify which stages remain consistent and which variables differ. This narrows the investigation, but a difference alone does not prove causation.
 
-Expected
+```text
+WORKING: Request → Auth → Fetch → Process → Respond
+BROKEN:  Request → Auth → Fetch → Timeout
+```
 
-Auth → Fetch → Process → Respond
+The evidence directs attention to the fetch stage and its surrounding conditions, such as upstream latency, connection limits, retry behavior, timeout configuration, or concurrency.
 
-Observed
+### 6. Trace dependencies and conditions
 
-Auth → Fetch → Timeout
+Investigate upstream inputs and downstream effects around the divergence boundary. Examine configuration, dependency behavior, environment differences, conditional logic, state transitions, scheduling, timing, and external services where relevant. Form a root-cause hypothesis and test it against the available evidence.
 
-The request path diverges after the fetch stage.
+### 7. Apply and verify the correction
 
-The investigation can focus on:
+Apply a targeted correction, then repeat the relevant execution path and checks. Confirm that the expected behavior is restored and that the original failure does not recur under the tested conditions. Record what was changed, the evidence supporting the diagnosis, and the verification performed.
 
-- Retry behavior
-- Connection limits
-- Upstream latency
-- Timeouts
-- Concurrency
-- Queue pressure
+A disappearing error message alone is not sufficient proof that the underlying problem has been corrected.
 
-Database Migration
+## Representative Diagnostic Applications
 
-Expected
+The examples below illustrate how the method can structure an investigation. They are representative scenarios, not claims that PBRCIM automatically resolves every instance of these failure classes.
 
-Backup → Migrate → Verify → Apply Delta Changes
+### CI/CD: deployment stage skipped
 
-Observed
+**Expected:** `Commit → Build → Test → Deploy`  
+**Observed:** `Commit → Build → Test → Deployment skipped`
 
-Backup → Migrate → Verify → Missing Delta Records
+**Investigation:** Compare branch and tag conditions, environment variables, workflow rules, job dependencies, and the actual pipeline state. A trigger mismatch may explain why deployment did not run.
 
-The migration completed, but the resulting state was incorrect.
+### API or distributed service: request timeout
 
-PBRCIM directs the investigation toward the point where the expected data path changed.
+**Expected:** `Authenticate → Fetch → Process → Respond`  
+**Observed:** `Authenticate → Fetch → Timeout`
 
-Possible areas include:
+**Investigation:** Examine upstream latency, connection-pool limits, queue pressure, retry behavior, timeout settings, and concurrency. The divergence focuses the inquiry; further evidence is required to establish the cause.
 
-- Timestamp handling
-- Schema differences
-- Mapping logic
-- Delta queries
-- Transaction boundaries
-- Frontend Interaction Failure
+### Database migration: resulting state is incorrect
 
-Expected
+**Expected:** `Backup → Migrate → Verify → Apply delta changes`  
+**Observed:** `Backup → Migrate → Verify → Missing delta records`
 
-Click → Event Handler → Modal Opens
+**Investigation:** Compare source and destination state, schema versions, timestamp handling, mapping logic, delta queries, transaction boundaries, and verification criteria.
 
-Observed
+### Frontend interaction: visible control produces no action
 
-Click → No Action
+**Expected:** `Click → Event handler → Modal opens`  
+**Observed:** `Click → No visible action`
 
-The interface may appear correct while the execution path fails before the modal stage.
+**Investigation:** Trace event binding, handler registration, DOM selectors, dynamic rendering, state conditions, and runtime errors. A visually correct interface does not establish that its interaction path executed correctly.
 
-Possible divergence points include:
+## Where PBRCIM Can Be Applied
 
-- Event binding
-- DOM selectors
-- Dynamic rendering
-- State conditions
-- Handler registration
+PBRCIM is language-agnostic at the methodology level. It can structure investigations involving:
 
-Where PBRCIM Can Be Applied
+- Frontend applications and user interactions
+- APIs and backend services
+- CI/CD and deployment workflows
+- Container builds and orchestration
+- Distributed and asynchronous systems
+- Database migrations and data-processing pipelines
+- Automation workflows and developer tooling
+- Runtime failures and environment mismatches
 
-PBRCIM is language-agnostic.
+The method depends on having a meaningful expected behavior and enough observed evidence to compare against it. Its effectiveness depends on the quality of those expectations, the completeness of the evidence, and the validity of the diagnostic reasoning.
 
-It can be applied to systems including:
+## PBRCIM at CursorLord Systems
 
-- Frontend applications
-- APIs
-- Backend services
-- CI/CD pipelines
-- Container builds
-- Distributed systems
-- Deployment workflows
-- Database migrations
-- Automation pipelines
-- Runtime failures
-- Developer tooling
+PBRCIM informs the design of diagnostic tools developed by CursorLord Systems.
 
-It is a diagnostic model.
+### PBRCIM Diagnosis Engine
 
-It is not a programming language, framework, package, or runtime dependency.
+The Diagnosis Engine applies structured diagnostic rules to supported log patterns and execution signals. Depending on the implemented rules, it can classify recognized failure patterns and present relevant diagnostic context.
 
-PBRCIM in Practice
-
-PBRCIM is used in the design of two tools developed by CursorLord Systems.
-
-PBRCIM Diagnosis Engine
-
-The Diagnosis Engine applies structured failure analysis to system logs and execution patterns.
-
-It examines signals associated with:
-
-- Build failures
-- Runtime errors
-- Dependency conflicts
-- CI/CD failures
-- Environment mismatches
-- Execution path failures
-
-Live tool:
 https://cursorlordsystems.com/diagnosis-engine
 
-PBRCIM Logic-Map
+### PBRCIM Logic-Map
 
-The PBRCIM Logic-Map supports manual investigation.
+The PBRCIM Logic-Map supports structured manual investigation. It helps engineers define expected behavior, record observed behavior, compare execution paths, identify divergence points, document root-cause reasoning, and create a diagnostic record.
 
-It provides a structured way to:
-
-- Define expected behavior
-- Record observed behavior
-- Compare execution paths
-- Identify divergence points
-- Document root causes
-- Produce a diagnostic record
-
-Live tool:
 https://cursorlordsystems.com/pbrcim-logicmap
 
-Engineering Principle
+These implementations operationalize parts of the framework. Their supported failure patterns and outputs are determined by their respective implementations; the methodology itself should not be read as a claim that every possible failure is automatically detectable.
 
-PBRCIM is based on a practical engineering approach:
+## Engineering Principle
 
-Expected Behavior
-        ↓
-Observed Behavior
-        ↓
-Identify Divergence
-        ↓
-Trace Conditions
-        ↓
-Isolate Root Cause
-        ↓
-Apply Correction
-        ↓
-Verify Expected Behavior
+PBRCIM follows a repeatable investigation sequence:
 
-The framework is especially useful when the question is not:
+```text
+Define expected behavior
+          ↓
+Record observed behavior
+          ↓
+Compare execution paths
+          ↓
+Locate meaningful divergence
+          ↓
+Trace contributing conditions
+          ↓
+Form and test a root-cause explanation
+          ↓
+Correct and verify
+```
 
-"What error was thrown?"
+The central question is not only:
 
-but:
+> “What error was thrown?”
 
-"Why did the system do something different from what its design intended?"
+It is also:
 
-Origin:
+> **“Why did the system behave differently from what its design or requirements intended?”**
 
-PBRCIM was formalized during diagnostic work on complex deployment and execution failures.
+## Origin and Development
 
-The recurring pattern was that conventional investigation often identified symptoms without exposing the first point where system behavior diverged from the intended execution path.
+PBRCIM was conceptualized and engineered by **Usenobong Jonah**, founder of CursorLord Systems, during a high-severity incident response that I executed on a large-scale pipeline system in 2023, where conventional debugging techniques failed to expose the root cause of a recurring deployment fault. The recurring investigative problem was that symptoms alone did not always reveal where actual behavior first departed from the intended execution path.
 
-The framework was developed around that observation.
+The framework was developed around a structured response to that problem: model the expected path, reconstruct the observed path, locate the divergence, investigate the surrounding conditions, and verify the correction.
 
-Its central method is simple:
+PBRCIM continues to evolve alongside its reference implementations and related diagnostic work.
 
-Model the expected path. Trace the observed path. Find the divergence. Investigate from there.
+## Related Work
 
-PBRCIM has since been refined and applied to frontend systems, APIs, runtime failures, CI/CD workflows, container environments, and structured diagnostic tooling.
+- **CursorLord Systems:** https://cursorlordsystems.com
+- **PBRCIM Diagnosis Engine:** https://cursorlordsystems.com/diagnosis-engine
+- **PBRCIM Logic-Map:** https://cursorlordsystems.com/pbrcim-logicmap
+- **PBRCIM Evaluation Dataset for LLM Code Reasoners:** Available through CursorLord Systems.
 
-Status
+## Authorship and Attribution
 
-PBRCIM is an actively developed diagnostic framework.
+PBRCIM stands for **Pattern-Based Root Cause Isolation Model**. The framework was developed and refined by **Usenobong Jonah (CursorLord)**.
 
-This repository documents the model and its core methodology.
+For technical enquiries or collaboration:
 
-Reference implementations and related tools continue to evolve independently.
+- **Website:** https://cursorlordsystems.com
+- **Email:** contact@cursorlordsystems.com
 
-Authorship and Attribution
+Copyright © 2023–2026 Usenobong Jonah. All rights reserved.
 
-PBRCIM stands for Pattern-Based Root Cause Isolation Model.
+## License
 
-The framework was developed and refined by Usenobong Jonah, founder of CursorLord Systems.
+The PBRCIM specification and documentation are licensed under the [Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License (CC BY-NC-ND 4.0)](https://creativecommons.org/licenses/by-nc-nd/4.0/).
 
-If you reference PBRCIM in research, documentation, software, or derivative work, please provide attribution to:
+Copyright © 2023–2026 Usenobong Jonah (CursorLord). All rights reserved, subject to the permissions granted by the license.
 
-Usenobong Jonah / CursorLord Systems
+For commercial licensing enquiries or permissions beyond the scope of this license, contact contact@cursorlordsystems.com.
 
-Website:
-https://cursorlordsystems.com
-
-Related Projects:
-
-- PBRCIM Diagnosis Engine  
-  https://cursorlordsystems.com/diagnosis-engine
-
-- PBRCIM Logic-Map  
-  https://cursorlordsystems.com/pbrcim-logicmap
-
-- PBRCIM Evaluation Dataset for LLM Code Reasoners  
-  Available from CursorLord Systems.
-
-Contact:
-
-For collaboration or technical enquiries:
-
-CursorLord Systems
-https://cursorlordsystems.com
-
-contact@cursorlordsystems.com
-
-© 2023–Present CursorLord Systems.
+This license applies to the specification and documentation identified as licensed material. It does not automatically determine the licensing of separate software, trademarks, or other assets.
