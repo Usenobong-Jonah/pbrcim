@@ -12,7 +12,7 @@ Its central question is:
 
 > **What was supposed to happen, what actually happened, where did the paths diverge, and what condition explains that divergence?**
 
-PBRCIM is a diagnostic methodology, not a programming language, runtime, package, or replacement for conventional debugging tools. It is an independent, system-level diagnostic methodology and conceptual model that can be executed entirely on a whiteboard, in an engineer's head, or integrated into completely different third-party software workflows.
+PBRCIM is a diagnostic methodology, not a programming language, runtime, package, or replacement for conventional debugging tools. It is an independent, system-level diagnostic methodology and conceptual model that can be executed entirely on a whiteboard, in an engineer's head, or integrated into third-party software workflows.
 
 ## The Problem PBRCIM Addresses
 
@@ -163,7 +163,7 @@ The examples below illustrate how the method can structure an investigation. The
 
 ## Where PBRCIM Can Be Applied
 
-PBRCIM is language-agnostic at the methodology level. It can structure investigations involving:
+PBRCIM is language-agnostic and environment-independent at the methodology level. Because it functions as a pure conceptual architecture, it can easily structure manual whiteboard triage sessions or scale directly into complex automated third-party workflows. It can structure investigations involving:
 
 - Frontend applications and user interactions
 - APIs and backend services
