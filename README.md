@@ -12,7 +12,7 @@ Its central question is:
 
 > **What was supposed to happen, what actually happened, where did the paths diverge, and what condition explains that divergence?**
 
-PBRCIM is a diagnostic methodology, not a programming language, runtime, package, or replacement for conventional debugging tools.
+PBRCIM is a diagnostic methodology, not a programming language, runtime, package, or replacement for conventional debugging tools. It is an independent, system-level diagnostic methodology and conceptual model that can be executed entirely on a whiteboard, in an engineer's head, or integrated into completely different third-party software workflows.
 
 ## The Problem PBRCIM Addresses
 
